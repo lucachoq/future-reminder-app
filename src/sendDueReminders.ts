@@ -17,28 +17,28 @@ const twilioClient = twilio(
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function formatReminderMessage(reminder: any) {
-  return `Reminder triggered:\nName - ${reminder.title || 'No Title'}\nMessage - ${reminder.message || ''}\nCategory - ${reminder.category || ''}`;
+function formatReminderMessage(reminder: Record<string, unknown>) {
+  return `Reminder triggered:\nName - ${(reminder.title as string) || 'No Title'}\nMessage - ${(reminder.message as string) || ''}\nCategory - ${(reminder.category as string) || ''}`;
 }
 
-async function sendEmail(reminder: any) {
+async function sendEmail(reminder: Record<string, unknown>) {
   const emailBody = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333;">🔔 Reminder: ${reminder.title || 'No Title'}</h2>
+      <h2 style="color: #333;">🔔 Reminder: ${(reminder.title as string) || 'No Title'}</h2>
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <p><strong>Message:</strong> ${reminder.message || 'No message'}</p>
-        <p><strong>Category:</strong> ${reminder.category || 'No category'}</p>
-        <p><strong>Date:</strong> ${new Date(reminder.reminder_date).toLocaleString()}</p>
+        <p><strong>Message:</strong> ${(reminder.message as string) || 'No message'}</p>
+        <p><strong>Category:</strong> ${(reminder.category as string) || 'No category'}</p>
+        <p><strong>Date:</strong> ${new Date(reminder.reminder_date as string).toLocaleString()}</p>
       </div>
-      <p style="color: #666; font-size: 14px;">This reminder was sent from Future Reminders app.</p>
+      <p style="color: #666; font-size: 14px;">This reminder was sent from LaterDate app.</p>
     </div>
   `;
 
   try {
     const data = await resend.emails.send({
-      from: 'Future Reminders <onboarding@resend.dev>',
-      to: [reminder.contact_email],
-      subject: `Reminder: ${reminder.title || 'No Title'}`,
+      from: 'LaterDate <onboarding@resend.dev>',
+      to: [reminder.contact_email as string],
+      subject: `Reminder: ${(reminder.title as string) || 'No Title'}`,
       html: emailBody,
     });
     console.log(`[EMAIL] Sent for reminder ${reminder.id} to ${reminder.contact_email}. Resend ID: ${data.data?.id || 'unknown'}`);
@@ -55,7 +55,7 @@ async function sendDueReminders() {
   console.log('[REMINDERS] Current UTC time:', nowIso);
 
   // First, check if the required columns exist
-  const { data: columnCheck, error: columnError } = await supabase
+  const { error: columnError } = await supabase
     .from('user_reminders')
     .select('sms_sent, email_sent')
     .limit(1);
@@ -170,7 +170,7 @@ async function sendDueReminders() {
 
     // Mark as sent if any method was successful
     if (smsSent || emailSent) {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (smsSent) updateData.sms_sent = true;
       if (emailSent) updateData.email_sent = true;
       try {

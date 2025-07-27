@@ -119,12 +119,9 @@ export default function Dashboard() {
         // Update existing reminder
         const { error } = await supabase
           .from('user_reminders')
-          .update({
-            ...reminderData,
-            updated_at: new Date().toISOString()
-          })
+          .update(reminderData)
           .eq('id', editingReminder.id);
-
+        
         if (error) throw error;
       } else {
         // Create new reminder
@@ -133,23 +130,16 @@ export default function Dashboard() {
           .insert([{
             ...reminderData,
             user_id: user?.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
           }]);
-
+        
         if (error) throw error;
-        // If SMS is selected, send SMS
-        if (reminderData.contact_methods?.includes('sms') && reminderData.contact_phone && reminderData.message) {
-          // Removed immediate SMS notification on reminder creation
-        }
       }
-
-      await loadReminders();
+      
       setShowForm(false);
       setEditingReminder(null);
-    } catch (error) {
+      loadReminders();
+    } catch (error: unknown) {
       console.error('Error saving reminder:', error);
-      alert('Failed to save reminder. Please try again.');
     }
   };
 
@@ -340,7 +330,7 @@ export default function Dashboard() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as 'incomplete' | 'completed' | 'all' | 'trash')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'

@@ -166,73 +166,97 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
     );
   };
 
-  function formatPhoneNumber(phone: string) {
-    let cleaned = phone.replace(/[^\d+]/g, '');
-    if (cleaned.startsWith('+')) return cleaned;
-    if (cleaned.length === 10) return '+1' + cleaned;
-    if (cleaned.length === 11 && cleaned.startsWith('1')) return '+' + cleaned;
-    return cleaned;
-  }
+  const formatPhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    return phone;
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid()) {
-      alert('Please fill in all required fields.');
+    
+    if (!formData.title.trim()) {
+      alert('Please enter a title for your reminder.');
       return;
     }
-    
-    let finalDate = formData.reminder_date;
-    if (timeType === 'relative') {
-      const now = new Date();
-      const multiplier = {
-        minutes: 60 * 1000,
-        hours: 60 * 60 * 1000,
-        days: 24 * 60 * 60 * 1000,
-        weeks: 7 * 24 * 60 * 60 * 1000,
-        months: 30 * 24 * 60 * 60 * 1000
-      };
-      const futureDate = new Date(now.getTime() + (relativeTime.value * multiplier[relativeTime.unit]));
-      // If more than 24 hours in the future and defaultReminderTime is set, set the time part
-      if (defaultReminderTime && (futureDate.getTime() - now.getTime()) > 24 * 60 * 60 * 1000) {
-        const [hours, minutes] = defaultReminderTime.split(':').map(Number);
-        futureDate.setHours(hours, minutes, 0, 0);
-      }
-      finalDate = futureDate.toISOString();
-    } else if (timeType === 'specific' && defaultReminderTime && formData.reminder_date) {
-      const now = new Date();
-      const reminderDate = new Date(formData.reminder_date);
-      if ((reminderDate.getTime() - now.getTime()) > 24 * 60 * 60 * 1000) {
-        const [hours, minutes] = defaultReminderTime.split(':').map(Number);
-        reminderDate.setHours(hours, minutes, 0, 0);
-        finalDate = reminderDate.toISOString().slice(0, 16);
+
+    if (!formData.reminder_date) {
+      alert('Please select a date and time for your reminder.');
+      return;
+    }
+
+    if (formData.contact_methods.length === 0) {
+      alert('Please select at least one contact method.');
+      return;
+    }
+
+    if (formData.contact_methods.includes('sms') || formData.contact_methods.includes('voice')) {
+      if (!formData.contact_phone) {
+        alert('Please enter a phone number for SMS or voice reminders.');
+        return;
       }
     }
 
-    const reminderData: Partial<Reminder> = {
-      title: formData.title,
-      message: formData.message,
-      reminder_date: finalDate,
-      category: formData.category,
-      contact_methods: formData.contact_methods,
-      persistence: formData.persistence,
-      contact_email: formData.contact_email,
-      contact_phone: formData.contact_phone ? formatPhoneNumber(formData.contact_phone) : '',
-      repeat_settings: formData.repeat_settings || undefined,
-    };
+    if (formData.contact_methods.includes('email')) {
+      if (!formData.contact_email) {
+        alert('Please enter an email address for email reminders.');
+        return;
+      }
+    }
 
-    onSave(reminderData);
+    // Auto-set reminder time to default time if reminder is more than 24 hours in the future
+    const reminderDate = new Date(formData.reminder_date);
+    const now = new Date();
+    const hoursDifference = (reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDifference > 24 && defaultReminderTime) {
+      const [hours, minutes] = defaultReminderTime.split(':');
+      reminderDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      formData.reminder_date = reminderDate.toISOString();
+    }
+
+    try {
+      await onSave({
+        title: formData.title,
+        message: formData.message,
+        reminder_date: formData.reminder_date,
+        category: formData.category,
+        contact_methods: formData.contact_methods,
+        contact_email: formData.contact_email,
+        contact_phone: formData.contact_phone,
+        persistence: 'once',
+        repeat_settings: undefined,
+      });
+      
+      // Reset form
+      setFormData({
+        title: '',
+        message: '',
+        reminder_date: '',
+        category: '',
+        contact_methods: defaultContactMethods || ['sms'],
+        contact_email: defaultEmail || '',
+        contact_phone: defaultPhone || '',
+        persistence: 'once',
+        repeat_settings: undefined,
+      });
+    } catch (error: unknown) {
+      console.error('Error saving reminder:', error);
+    }
   };
 
   const handleCategoryChange = (category: string) => {
     setFormData(prev => ({ ...prev, category }));
   };
 
-  const handleContactMethodToggle = (method: string) => {
+  const handleContactMethodChange = (method: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      contact_methods: prev.contact_methods.includes(method)
-        ? prev.contact_methods.filter(m => m !== method)
-        : [...prev.contact_methods, method]
+      contact_methods: checked
+        ? [...prev.contact_methods, method]
+        : prev.contact_methods.filter(m => m !== method)
     }));
   };
 
@@ -421,7 +445,7 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
                     />
                     <select
                       value={relativeTime.unit}
-                      onChange={(e) => setRelativeTime(prev => ({ ...prev, unit: e.target.value as any }))}
+                      onChange={(e) => setRelativeTime(prev => ({ ...prev, unit: e.target.value as 'minutes' | 'hours' | 'days' | 'weeks' | 'months' }))}
                         className={inputClass}
                     >
                       <option value="minutes">Minutes</option>
@@ -546,7 +570,7 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
                     <input
                       type="checkbox"
                       checked={formData.contact_methods.includes(method.id)}
-                      onChange={() => handleContactMethodToggle(method.id)}
+                      onChange={(e) => handleContactMethodChange(method.id, e.target.checked)}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <method.icon className="h-4 w-4 text-gray-500" />

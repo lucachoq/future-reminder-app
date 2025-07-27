@@ -5,6 +5,10 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
+if (!accountSid || !authToken || !fromNumber) {
+  throw new Error('Missing required Twilio environment variables');
+}
+
 const client = twilio(accountSid, authToken);
 
 export async function POST(request: NextRequest) {
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
 </Response>`;
 
     const call = await client.calls.create({
-      from: fromNumber,
+      from: fromNumber!,
       to: to,
       twiml: twiml,
     });

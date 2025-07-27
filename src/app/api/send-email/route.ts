@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const { to, subject, html } = await request.json();
     
     const data = await resend.emails.send({
-      from: 'Future Reminders <onboarding@resend.dev>',
+      from: 'LaterDate <onboarding@resend.dev>',
       to: [to],
       subject: subject,
       html: html,

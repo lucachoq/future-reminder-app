@@ -76,14 +76,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   };
 
   function formatPhoneNumber(phone: string) {
-    let cleaned = phone.replace(/[^\d]/g, '');
-    if (cleaned.length === 0) return '';
-    if (cleaned.length < 4) return cleaned;
-    if (cleaned.length < 7) return `(${cleaned.slice(0,3)}) ${cleaned.slice(3)}`;
-    return `(${cleaned.slice(0,3)}) ${cleaned.slice(3,6)}-${cleaned.slice(6,10)}`;
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.length === 10) return '+1' + cleaned;
+    if (cleaned.length === 11 && cleaned.startsWith('1')) return '+' + cleaned;
+    return cleaned;
   }
+
   function toE164(phone: string) {
-    let cleaned = phone.replace(/[^\d+]/g, '');
+    const cleaned = phone.replace(/[^\d+]/g, '');
     if (cleaned.startsWith('+')) return cleaned;
     if (cleaned.length === 10) return '+1' + cleaned;
     if (cleaned.length === 11 && cleaned.startsWith('1')) return '+' + cleaned;
@@ -93,7 +94,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const settingsData = {
+      const settingsData: Record<string, unknown> = {
         user_id: user?.id,
         email: formData.email,
         phone: toE164(formData.phone), // Always convert to E.164 for saving
@@ -125,7 +126,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       await loadSettings();
       // Optionally, set a local state to show a temporary success message in the UI
       // setShowSuccess(true); setTimeout(() => setShowSuccess(false), 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving settings:', error);
       alert('Failed to save settings. Please try again.');
     } finally {
@@ -245,7 +246,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             <div className="p-4 border border-gray-200 rounded-lg">
               <h4 className="text-sm font-medium text-gray-900 mb-2">Data Usage</h4>
               <p className="text-sm text-gray-600">
-                We only use your contact information to send you the reminders you've requested. We never share your data with third parties.
+                We only use your contact information to send you the reminders you&apos;ve requested. We never share your data with third parties.
               </p>
             </div>
 
@@ -268,7 +269,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="text-sm font-medium text-yellow-900 mb-2">Free Plan</h3>
             <p className="text-sm text-yellow-700">
-              You're currently on the free plan. Upgrade to unlock unlimited reminders and advanced features.
+              You&apos;re currently on the free plan. Upgrade to unlock unlimited reminders and advanced features.
             </p>
           </div>
 

@@ -35,7 +35,7 @@ export default function LandingPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
               <Bell className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Remind Me</span>
+            <span className="text-xl font-bold text-gray-900">LaterDate</span>
           </motion.div>
           
           <motion.div
@@ -86,7 +86,7 @@ export default function LandingPage() {
               className="mt-6 text-lg leading-8 text-gray-600"
             >
               Set reminders for the future and get notified via email, SMS, or call. 
-              Perfect for canceling subscriptions, renewing documents, and staying on top of life's important moments.
+              Perfect for canceling subscriptions, renewing documents, and staying on top of life&apos;s important moments.
             </motion.p>
             
             <motion.div
@@ -232,7 +232,7 @@ export default function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
                   <Bell className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-white">Remind Me</span>
+                <span className="text-lg font-bold text-white">LaterDate</span>
               </div>
               <p className="text-sm leading-6 text-gray-300">
                 Never miss important things again with our future reminder app.
@@ -267,7 +267,7 @@ export default function LandingPage() {
           </div>
           <div className="mt-16 border-t border-white/10 pt-8 sm:mt-20 lg:mt-24">
             <p className="text-xs leading-5 text-gray-400">
-              &copy; 2024 Remind Me. All rights reserved.
+              &copy; 2024 LaterDate. All rights reserved.
             </p>
           </div>
         </div>

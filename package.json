@@ -1,7 +1,8 @@
 {
-  "name": "future-reminder-app",
+  "name": "laterdate",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"next dev\" \"node reminderRunner.js\" \"node callReminderRunner.js\" \"node emailReminderRunner.js\"",
     "build": "next build",

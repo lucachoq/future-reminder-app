@@ -248,7 +248,7 @@ export default function ReminderCard({
             <p className="text-sm text-gray-600 mb-4 text-center">Do you really want to delete this reminder?</p>
             <label className="flex items-center mb-4">
               <input type="checkbox" checked={dontRemind} onChange={e => setDontRemind(e.target.checked)} className="mr-2" />
-              <span className="text-xs text-gray-500">Don't remind me again</span>
+              <span className="text-xs text-gray-500">Don&apos;t show this again</span>
             </label>
             <div className="flex gap-2 w-full">
               <button

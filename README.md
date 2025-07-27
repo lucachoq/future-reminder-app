@@ -1,4 +1,4 @@
-# Remind Me - Future Reminder App
+# LaterDate - Future Reminder App
 
 A modern, feature-rich reminder application that helps you never miss important tasks again. Set reminders for the future and get notified via email, SMS, or phone calls.
 
@@ -54,7 +54,7 @@ A modern, feature-rich reminder application that helps you never miss important 
 ### 1. Clone the repository
 ```bash
 git clone <repository-url>
-cd future-reminder-app
+cd laterdate
 ```
 
 ### 2. Install dependencies
@@ -309,7 +309,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 1. Check the [Issues](https://github.com/your-repo/issues) page
 2. Create a new issue with detailed information
-3. Contact support at support@remindme.com
+3. Contact support at support@laterdate.com
 
 ## 🙏 Acknowledgments
 
@@ -322,4 +322,4 @@ If you encounter any issues or have questions:
 
 ---
 
-Made with ❤️ by the Remind Me team
+Made with ❤️ by the LaterDate team

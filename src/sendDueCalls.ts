@@ -14,10 +14,16 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN!
 );
 
-function formatCallTwiml(reminder: any) {
-  const title = reminder.title || 'No Title';
-  const message = reminder.message || 'No message';
-  const category = reminder.category || 'No category';
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+if (!twilioPhoneNumber) {
+  throw new Error('Missing TWILIO_PHONE_NUMBER environment variable');
+}
+
+function formatCallTwiml(reminder: Record<string, unknown>) {
+  const title = (reminder.title as string) || 'No Title';
+  const message = (reminder.message as string) || 'No message';
+  const category = (reminder.category as string) || 'No category';
   
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -56,7 +62,7 @@ async function sendDueCalls() {
       try {
         const result = await twilioClient.calls.create({
           to: reminder.contact_phone,
-          from: process.env.TWILIO_PHONE_NUMBER,
+          from: twilioPhoneNumber!,
           twiml: twiml,
         });
         console.log(`[CALL] Sent for reminder ${reminder.id} to ${reminder.contact_phone}. Twilio SID: ${result.sid}`);

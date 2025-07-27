@@ -16,10 +16,16 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const contactMethodOptions = [
+    { id: 'email', label: 'Email' },
+    { id: 'sms', label: 'SMS' },
+    { id: 'voice', label: 'Phone Call' }
+  ];
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
-    default_reminder_time: "09:00"
+    default_reminder_time: "09:00",
+    default_contact_methods: ["sms"]
   });
 
   useEffect(() => {
@@ -42,17 +48,24 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
       if (data) {
         setSettings(data);
+        let phone = data.phone || '';
+        if (phone.startsWith('+1') && phone.length === 12) {
+          phone = phone.slice(2); // Remove '+1'
+        }
+        phone = phone.replace(/[^\d]/g, '');
         setFormData({
           email: data.email,
-          phone: data.phone || "",
-          default_reminder_time: data.default_reminder_time
+          phone,
+          default_reminder_time: data.default_reminder_time,
+          default_contact_methods: data.default_contact_methods || ["sms"]
         });
       } else {
         // Create default settings
         setFormData({
           email: user?.emailAddresses[0]?.emailAddress || "",
           phone: "",
-          default_reminder_time: "09:00"
+          default_reminder_time: "09:00",
+          default_contact_methods: ["sms"]
         });
       }
     } catch (error) {
@@ -83,8 +96,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       const settingsData = {
         user_id: user?.id,
         email: formData.email,
-        phone: formData.phone ? toE164(formData.phone) : null,
+        phone: toE164(formData.phone), // Always convert to E.164 for saving
         default_reminder_time: formData.default_reminder_time,
+        default_contact_methods: formData.default_contact_methods,
         updated_at: new Date().toISOString()
       };
 
@@ -150,15 +164,16 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               type="tel"
               value={formatPhoneNumber(formData.phone)}
               onChange={e => {
+                // Only update state with digits, do not format for display
                 const raw = e.target.value.replace(/[^\d]/g, '');
                 setFormData(prev => ({ ...prev, phone: raw }));
               }}
               onBlur={e => {
-                // On blur, format to E.164 for saving
+                // On blur, convert to E.164 and update state
                 setFormData(prev => ({ ...prev, phone: toE164(prev.phone) }));
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 placeholder-gray-500"
-              placeholder="(226) 975-9610"
+              placeholder="(123) 456-7891"
             />
             <p className="mt-1 text-sm text-gray-500">
               This phone number will be used as the default for SMS and call reminders
@@ -177,6 +192,37 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             />
             <p className="mt-1 text-sm text-gray-500">
               Default time for new reminders when no specific time is set
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Default Contact Method(s)
+            </label>
+            <div className="flex gap-4 mb-2">
+              {contactMethodOptions.map(opt => (
+                <label key={opt.id} className="flex items-center gap-2 text-gray-900 font-medium">
+                  <input
+                    type="checkbox"
+                    checked={formData.default_contact_methods.includes(opt.id)}
+                    onChange={e => {
+                      setFormData(prev => {
+                        const exists = prev.default_contact_methods.includes(opt.id);
+                        return {
+                          ...prev,
+                          default_contact_methods: exists
+                            ? prev.default_contact_methods.filter(m => m !== opt.id)
+                            : [...prev.default_contact_methods, opt.id]
+                        };
+                      });
+                    }}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-sm text-gray-700">
+              These will be selected by default when creating a new reminder
             </p>
           </div>
         </div>

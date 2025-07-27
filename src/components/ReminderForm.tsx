@@ -16,14 +16,14 @@ interface ReminderFormProps {
   onCancel: () => void;
 }
 
-export default function ReminderForm({ reminder, onSave, onCancel, defaultReminderTime, defaultEmail, defaultPhone }: ReminderFormProps & { defaultReminderTime?: string, defaultEmail?: string, defaultPhone?: string }) {
+export default function ReminderForm({ reminder, onSave, onCancel, defaultReminderTime, defaultEmail, defaultPhone, defaultContactMethods }: ReminderFormProps & { defaultReminderTime?: string, defaultEmail?: string, defaultPhone?: string, defaultContactMethods?: string[] }) {
   const { user } = useUser();
   const [formData, setFormData] = useState({
     title: reminder?.title || "",
     message: reminder?.message || "",
     reminder_date: reminder?.reminder_date ? new Date(reminder.reminder_date).toISOString().slice(0, 16) : "",
     category: reminder?.category || "",
-    contact_methods: reminder?.contact_methods || ["email"],
+    contact_methods: reminder?.contact_methods || defaultContactMethods || ["sms"],
     persistence: reminder?.persistence || "once",
     contact_email: reminder?.contact_email || "",
     contact_phone: reminder?.contact_phone || "",
@@ -39,12 +39,12 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
   });
   const [showRepeatOptions, setShowRepeatOptions] = useState(false);
   const [step, setStep] = useState(0);
+  // Remove the persistence step from the steps array
   const steps = [
     'Details',
     'Time',
     'Category',
     'Contact',
-    'Persistence'
   ];
 
   const categories = [
@@ -55,7 +55,7 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
   const contactMethods = [
     { id: 'email', label: 'Email', icon: Mail },
     { id: 'sms', label: 'SMS', icon: Phone },
-    { id: 'call', label: 'Phone Call', icon: Phone }
+    { id: 'voice', label: 'Phone Call', icon: Phone }
   ];
 
   // Remove persistenceOptions for daily, weekly, and custom
@@ -84,15 +84,20 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
     "😀","😃","😄","😁","😆","😊","😎","😍","🥰","😇","🤓","🧑‍💻","👨‍💻","👩‍💻","💼","🏥","🏠","🏡","🏢","🏫","📚","💰","💸","💳","📅","📆","📈","📉","📊","📋","📦","📞","📧","📱","📝","🔔","⏰","🕒","📅","🎂","🎉","🎁","🛒","🚗","✈️","🚆","🚀","🧳","🛏️","🍎","🍔","🍕","🍣","🍰","☕","🍺","⚽","🏀","🏈","🎾","🏓","🏸","🏊","🚴","🎨","🎵","🎸","🎤","🎧","🎬","📷","🎮","🧩","🧸","👨‍👩‍👧‍👦","👶","👧","👦","👩","👨","🧑","👵","👴"
   ];
 
-  // 1. When setting a custom date, default the time to defaultReminderTime
+  // After formData is initialized and defaultReminderTime is available, adjust the reminder_date time for future reminders
   useEffect(() => {
-    if (timeType === 'specific' && !formData.reminder_date && defaultReminderTime) {
-      const today = new Date();
-      const [hours, minutes] = defaultReminderTime.split(":");
-      today.setHours(Number(hours), Number(minutes), 0, 0);
-      setFormData(prev => ({ ...prev, reminder_date: today.toISOString().slice(0, 16) }));
+    if (!reminder && defaultReminderTime && formData.reminder_date) {
+      const now = new Date();
+      const reminderDate = new Date(formData.reminder_date);
+      // If the reminder is more than 24 hours in the future and the time is at the current hour/minute, set to defaultReminderTime
+      if ((reminderDate.getTime() - now.getTime()) > 24 * 60 * 60 * 1000) {
+        const [hours, minutes] = defaultReminderTime.split(':').map(Number);
+        reminderDate.setHours(hours, minutes, 0, 0);
+        setFormData(prev => ({ ...prev, reminder_date: reminderDate.toISOString().slice(0, 16) }));
     }
-  }, [timeType, defaultReminderTime]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.reminder_date, defaultReminderTime]);
 
   // 2. When clicking outside the emoji picker, close it
   useEffect(() => {
@@ -141,6 +146,13 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
     fetchThemes();
   }, [user]);
 
+  useEffect(() => {
+    if (!reminder && defaultContactMethods) {
+      setFormData(prev => ({ ...prev, contact_methods: defaultContactMethods }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultContactMethods]);
+
   // 1. Add validation for essential fields before allowing save
   const isFormValid = () => {
     return (
@@ -180,7 +192,20 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
         months: 30 * 24 * 60 * 60 * 1000
       };
       const futureDate = new Date(now.getTime() + (relativeTime.value * multiplier[relativeTime.unit]));
+      // If more than 24 hours in the future and defaultReminderTime is set, set the time part
+      if (defaultReminderTime && (futureDate.getTime() - now.getTime()) > 24 * 60 * 60 * 1000) {
+        const [hours, minutes] = defaultReminderTime.split(':').map(Number);
+        futureDate.setHours(hours, minutes, 0, 0);
+      }
       finalDate = futureDate.toISOString();
+    } else if (timeType === 'specific' && defaultReminderTime && formData.reminder_date) {
+      const now = new Date();
+      const reminderDate = new Date(formData.reminder_date);
+      if ((reminderDate.getTime() - now.getTime()) > 24 * 60 * 60 * 1000) {
+        const [hours, minutes] = defaultReminderTime.split(':').map(Number);
+        reminderDate.setHours(hours, minutes, 0, 0);
+        finalDate = reminderDate.toISOString().slice(0, 16);
+      }
     }
 
     const reminderData: Partial<Reminder> = {
@@ -552,7 +577,7 @@ export default function ReminderForm({ reminder, onSave, onCancel, defaultRemind
                     {emailError && <span className="text-xs text-red-500 mt-1 block">{emailError}</span>}
               </div>
             )}
-                {(formData.contact_methods.includes('sms') || formData.contact_methods.includes('call')) && (
+                {(formData.contact_methods.includes('sms') || formData.contact_methods.includes('voice')) && (
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone</label>
                 <input

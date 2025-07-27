@@ -11,5 +11,5 @@ function runScript() {
   });
 }
 
-setInterval(runScript, 30 * 1000);
+setInterval(runScript, 10 * 1000); // Run every 10 seconds
 runScript(); // Run immediately on startup 

@@ -13,6 +13,7 @@ interface ReminderCardProps {
   onToggle: (id: string, completed: boolean) => void;
   index: number;
   onRestore?: (id: string) => void;
+  onDeletePermanent?: (id: string) => void;
   highlightOverdue?: boolean;
 }
 
@@ -23,6 +24,7 @@ export default function ReminderCard({
   onToggle, 
   index,
   onRestore,
+  onDeletePermanent,
   highlightOverdue
 }: ReminderCardProps) {
   const isOverdue = !reminder.completed && new Date(reminder.reminder_date) < new Date();
@@ -161,25 +163,33 @@ export default function ReminderCard({
 
         {/* Actions */}
         {onRestore ? (
-          <button
-            onClick={() => onRestore(reminder.id)}
-            className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 mt-4 w-full"
-          >
-            Restore
-          </button>
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => onRestore(reminder.id)}
+              className="flex-1 px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            >
+              Restore
+            </button>
+            <button
+              onClick={() => onDeletePermanent && onDeletePermanent(reminder.id)}
+              className="flex-1 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete Permanently
+            </button>
+          </div>
         ) : (
         <div className="flex items-center space-x-2 ml-4">
           {/* Toggle Complete */}
           <button
             onClick={() => onToggle(reminder.id, !reminder.completed)}
-            className={`p-2 rounded-full transition-colors ${
+            className={`p-2 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95 ${
               reminder.completed
                 ? 'text-green-600 hover:bg-green-100'
                 : 'text-gray-400 hover:bg-gray-100'
             }`}
             title={reminder.completed ? 'Mark as incomplete' : 'Mark as complete'}
           >
-            <CheckCircle className="h-5 w-5" />
+            <CheckCircle className={`h-5 w-5 transition-transform duration-200 ${reminder.completed ? 'rotate-12 scale-110' : ''}`} />
           </button>
 
           {/* Edit */}

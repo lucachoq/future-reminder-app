@@ -32,6 +32,7 @@ export type UserSettings = {
   email: string
   phone?: string
   default_reminder_time: string
+  default_contact_methods?: string[]
   created_at: string
   updated_at: string
 } 
